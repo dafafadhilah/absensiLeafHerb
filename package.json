@@ -1,28 +1,24 @@
 {
-  "name": "argon-dashboard-react",
+  "homepage": "https://dafafadhilah.github.io/absensiLeafHerb",
+  "name": "absensileafherb",
   "version": "1.2.4",
-  "description": "React version of Argon Dashboard by Creative Tim",
+  "description": "React For Leaf Herb by Sisilia",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/creativetimofficial/argon-dashboard-react.git"
+    "url": "git+https://github.com/dafafadhilah/absensiLeafHerb.git"
   },
   "keywords": [
     "react",
     "reactjs",
-    "argon",
-    "argon-react",
     "dashboard",
-    "dashboard-react",
-    "argon-dashboard",
-    "argon-dashboard-react"
+    "dashboard-react"
   ],
   "author": "Creative Tim",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/creativetimofficial/argon-dashboard-react/issues"
+    "url": "https://github.com/dafafadhilah/absensiLeafHerb/issues"
   },
-  "homepage": "https://demos.creative-tim.com/argon-dashboard-react/",
   "scripts": {
     "dev": "react-scripts start",
     "start": "react-scripts start",
@@ -35,7 +31,9 @@
     "build:scss": "npm run compile:scss && npm run minify:scss && npm run map:scss",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "pradeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"
