@@ -18,16 +18,28 @@ import {
   Container,
   Media,
 } from "reactstrap";
+import CustomModalConfirm from "../../components/CustomModalConfirm";
 
 const AdminNavbar = (props) => {
   const [user, setUser] = useState(null);
+  const [modalConfirm, setModalConfirm] = useState({
+    visible: false,
+    message: "",
+    confirm: null,
+  });
 
   const navigate = useNavigate(); // Untuk redirect setelah logout
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    navigate("/auth/login"); // Redirect ke halaman login
+    setModalConfirm({
+      visible: true,
+      message: "Apakah anda yakin ingin keluar?",
+      confirm: async () => {
+        await supabase.auth.signOut();
+        localStorage.clear();
+        navigate("/auth/login");
+      },
+    });
   };
 
   useEffect(() => {
@@ -112,6 +124,12 @@ const AdminNavbar = (props) => {
             </UncontrolledDropdown>
           </Nav>
         </Container>
+        <CustomModalConfirm
+          visible={modalConfirm.visible}
+          message={modalConfirm.message}
+          onClose={() => setModalConfirm({ ...modalConfirm, visible: false })}
+          onConfirm={modalConfirm.confirm}
+        />
       </Navbar>
     </>
   );

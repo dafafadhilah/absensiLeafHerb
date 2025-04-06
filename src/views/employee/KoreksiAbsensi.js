@@ -1,3 +1,7 @@
+import { DatePicker, TimePicker } from "antd";
+import Header from "components/Headers/Header.js";
+import moment from "moment";
+import "moment/locale/id";
 import { useEffect, useState } from "react";
 import {
   Button,
@@ -15,13 +19,9 @@ import {
   Row,
   Table,
 } from "reactstrap";
-import Header from "components/Headers/Header.js";
-import moment from "moment";
-import "moment/locale/id";
 import supabase from "utils/supabaseClient";
 import CustomModal from "../../components/CustomModal";
 import CustomModalConfirm from "../../components/CustomModalConfirm";
-import { DatePicker, TimePicker } from "antd";
 
 const AbsensiKaryawan = () => {
   const [modal, setModal] = useState({
@@ -198,22 +198,34 @@ const AbsensiKaryawan = () => {
         .select("*")
         .eq("user_id", user)
         .eq("date", formattedDate)
-        .neq("date", today)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error(
           "Error saat mengambil data absen karyawan:",
           error.message
         );
-      }
+      } else if (data) {
+        // Cek apakah datanya untuk hari ini dan clock_out masih null
+        const isToday = data.date === today;
+        const isClockOutNull = data.clock_out === null;
 
-      if (data) {
-        console.log("Data Absensi Karyawan", data);
-        callCekAbsensi(data);
-        setDataAbsensiKaryawan(data);
+        if (isToday && isClockOutNull) {
+          console.log(
+            "Anda belum absen pulang hari ini, tidak dapat dikoreksi!"
+          );
+          setModal({
+            visible: true,
+            type: "error",
+            message: "Anda belum absen pulang hari ini, tidak dapat dikoreksi!",
+          });
+        } else {
+          console.log("Data Absensi Karyawan", data);
+          callCekAbsensi(data);
+          setDataAbsensiKaryawan(data);
+        }
       } else {
-        console.log("Tidak ada karyawan");
+        console.log("Tidak ada data karyawan");
         setModal({
           visible: true,
           type: "error",

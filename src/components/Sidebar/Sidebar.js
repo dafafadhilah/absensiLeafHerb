@@ -19,6 +19,7 @@ import {
 import { Badge } from "antd";
 import { useDispatch } from "react-redux";
 import { fetchNotificationCount } from "../../redux/action/notification";
+import CustomModalConfirm from "../../components/CustomModalConfirm";
 
 const Sidebar = (props) => {
   const navigate = useNavigate();
@@ -28,6 +29,11 @@ const Sidebar = (props) => {
   const { bgColor, routes, logo } = props;
   const dispatch = useDispatch();
   const [user, setUser] = useState(null);
+  const [modalConfirm, setModalConfirm] = useState({
+    visible: false,
+    message: "",
+    confirm: null,
+  });
 
   useEffect(() => {
     dispatch(fetchNotificationCount()); // Ambil data koreksi absensi & lembur saat Sidebar dimuat
@@ -68,9 +74,15 @@ const Sidebar = (props) => {
   const closeCollapse = () => setCollapseOpen(false);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    navigate("/auth/login");
+    setModalConfirm({
+      visible: true,
+      message: "Apakah anda yakin ingin keluar?",
+      confirm: async () => {
+        await supabase.auth.signOut();
+        localStorage.clear();
+        navigate("/auth/login");
+      },
+    });
   };
 
   // **Filter routes berdasarkan jobCode**
@@ -198,6 +210,13 @@ const Sidebar = (props) => {
           <Nav navbar>{createLinks(groupedRoutes)}</Nav>
         </Collapse>
       </Container>
+
+      <CustomModalConfirm
+        visible={modalConfirm.visible}
+        message={modalConfirm.message}
+        onClose={() => setModalConfirm({ ...modalConfirm, visible: false })}
+        onConfirm={modalConfirm.confirm}
+      />
     </Navbar>
   );
 };

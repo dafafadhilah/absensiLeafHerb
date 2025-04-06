@@ -2,6 +2,7 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import supabase from "utils/supabaseClient";
+import { Spin } from "antd";
 
 const ProtectedRoute = ({ allowedJobCodes, children }) => {
   const [isAllowed, setIsAllowed] = useState(null);
@@ -28,7 +29,20 @@ const ProtectedRoute = ({ allowedJobCodes, children }) => {
     fetchUser();
   }, [allowedJobCodes]);
 
-  if (isAllowed === null) return <div>Loading...</div>;
+  if (isAllowed === null)
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+
   if (isAllowed === false) return <Navigate to="/admin/unauthorized" replace />;
   return children;
 };

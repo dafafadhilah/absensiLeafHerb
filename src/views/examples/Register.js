@@ -153,6 +153,7 @@ const Register = () => {
       if (insertError) {
         throw new Error("Error inserting user: " + insertError.message);
       }
+      await supabase.auth.signOut();
 
       setModal({
         visible: true,
