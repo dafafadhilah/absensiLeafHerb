@@ -140,9 +140,9 @@ var routes = [
     allowedJobCodes: ["crew", "admin"],
   },
 
-  // Menu Manager
+  // Menu Crew Leader
   {
-    category: "Menu Manager",
+    category: "Menu Crew Leader",
     path: "/rekapAbsensi",
     name: "Rekap Absensi",
     icon: "ni ni-tag text-green",
@@ -155,7 +155,7 @@ var routes = [
     allowedJobCodes: ["crew Leader", "admin"],
   },
   {
-    category: "Menu Manager",
+    category: "Menu Crew Leader",
     path: "/rekapGaji",
     name: "Rekap Gaji",
     icon: "ni ni-money-coins text-yellow",
@@ -168,7 +168,7 @@ var routes = [
     allowedJobCodes: ["crew Leader", "admin"],
   },
   {
-    category: "Menu Manager",
+    category: "Menu Crew Leader",
     path: "/todolist",
     name: "Todolist",
     icon: "ni ni-check-bold text-blue",

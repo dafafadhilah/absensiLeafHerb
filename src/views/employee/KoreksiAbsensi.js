@@ -284,7 +284,7 @@ const AbsensiKaryawan = () => {
         setModal({
           visible: true,
           type: "success",
-          message: "Data berhasil diinput mohon menunggu approval manager!",
+          message: "Data berhasil diinput mohon menunggu approval Crew Leader!",
           onConfirm: () => window.location.reload(),
         });
         getHistoryAbsen();
