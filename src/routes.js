@@ -24,16 +24,26 @@ var routes = [
     path: "/index",
     name: "Dashboard",
     icon: "ni ni-tv-2 text-primary",
-    component: <Index />,
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew", "crew Leader", "admin"]}>
+        <Index />
+      </ProtectedRoute>
+    ),
     layout: "/admin",
+    allowedJobCodes: ["crew", "crew Leader", "admin"],
   },
   {
     category: "Menu Utama",
     path: "/user-profile",
     name: "User Profile",
     icon: "ni ni-single-02 text-dark",
-    component: <Profile />,
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew", "crew Leader", "admin"]}>
+        <Profile />
+      </ProtectedRoute>
+    ),
     layout: "/admin",
+    allowedJobCodes: ["crew", "crew Leader", "admin"],
   },
 
   // Menu Template
