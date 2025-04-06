@@ -146,7 +146,7 @@ const Register = () => {
           id: userId,
           email: form.email,
           name: form.name,
-          job_code: "employee",
+          job_code: "crew",
         },
       ]);
 

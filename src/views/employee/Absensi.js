@@ -69,6 +69,7 @@ const Absensi = (props) => {
       .from("attendance")
       .select("id, date, clock_in, clock_out, users(email, name)") // Join dengan tabel users
       .eq("user_id", userId)
+      .eq("status", "Hadir")
       .lte("date", today)
       .order("date", { ascending: false })
       .limit(5);
@@ -256,15 +257,9 @@ const Absensi = (props) => {
   if (window.Chart) {
     parseOptions(Chart, chartOptions());
   }
-
-  const toggleNavs = (e, index) => {
-    e.preventDefault();
-    setActiveNav(index);
-    setChartExample1Data("data" + index);
-  };
   return (
     <>
-      <Header />
+      <Header menuName={"ABSENSI"} />
       {/* Page content */}
       <Container className="mt--7" fluid>
         <Row>
@@ -277,7 +272,7 @@ const Absensi = (props) => {
                       tag="h5"
                       className="text-uppercase text-muted mb-0"
                     >
-                      Absen Masuk - 08:00
+                      Absen Masuk - 09:00
                     </CardTitle>
                     <span className="h2 font-weight-bold mb-0">
                       {moment().locale("id").format("DD MMMM YYYY") +
@@ -318,7 +313,7 @@ const Absensi = (props) => {
                       tag="h5"
                       className="text-uppercase text-muted mb-0"
                     >
-                      Absen Pulang - 17:00
+                      Absen Pulang - 18:00
                     </CardTitle>
                     <span className="h2 font-weight-bold mb-0">
                       {moment().locale("id").format("DD MMMM YYYY") +
@@ -368,15 +363,40 @@ const Absensi = (props) => {
                 </thead>
                 <tbody>
                   {dataHistory.length > 0 ? (
-                    dataHistory.map((item) => (
-                      <tr key={item.id}>
-                        {/* <th scope="row">{item.users.email}</th>
-                        <td>{item.users.name}</td> */}
-                        <td>{moment(item.date).format("DD MMMM YYYY")}</td>
-                        <td>{item.clock_in}</td>
-                        <td>{item.clock_out}</td>
-                      </tr>
-                    ))
+                    dataHistory.map((item) => {
+                      const clockInTime = moment(item.clock_in, "HH:mm");
+                      const clockOutTime = moment(item.clock_out, "HH:mm");
+                      const isLateIn = clockInTime.isAfter(
+                        moment("09:00", "HH:mm")
+                      );
+                      const isLateOut = clockOutTime.isBefore(
+                        moment("18:00", "HH:mm")
+                      );
+
+                      return (
+                        <tr key={item.id}>
+                          {/* <th scope="row">{item.users.email}</th>
+          <td>{item.users.name}</td> */}
+                          <td>{moment(item.date).format("DD MMMM YYYY")}</td>
+                          <td
+                            style={{
+                              "background-color": isLateIn ? "yellow" : "white",
+                            }}
+                          >
+                            {item.clock_in}
+                          </td>
+                          <td
+                            style={{
+                              "background-color": isLateOut
+                                ? "yellow"
+                                : "white",
+                            }}
+                          >
+                            {item.clock_out}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan="5" className="text-center">

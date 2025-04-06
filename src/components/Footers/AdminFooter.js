@@ -29,11 +29,11 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                Dafa "Sisilia" Fadhilah
+                This is Sisilia
               </NavLink>
             </NavItem>
 
-            <NavItem>
+            {/* <NavItem>
               <NavLink
                 href="https://www.instagram.com/fadhilahdafa/"
                 rel="noopener noreferrer"
@@ -61,7 +61,7 @@ const Footer = () => {
               >
                 MIT License
               </NavLink>
-            </NavItem>
+            </NavItem> */}
           </Nav>
         </Col>
       </Row>

@@ -105,6 +105,7 @@ const AbsensiKaryawan = () => {
       .from("attendance_corrections")
       .select("*") // Join dengan tabel users
       .eq("user_id", userId)
+      .eq("status", "Pending")
       .eq("attendance_id", dataAbsensi.id);
 
     if (error) {
@@ -118,7 +119,7 @@ const AbsensiKaryawan = () => {
         type: "warning",
         message: `Anda sudah melakukan pengajuan pada ${moment(
           form.tanggal,
-          "DD-MM-YYYY"
+          "YYYY-MM-DD"
         ).format("DD MMMM YYYY")} sebelumnya, mohon cek history absensi!`,
       });
     } else {
@@ -284,18 +285,10 @@ const AbsensiKaryawan = () => {
           visible: true,
           type: "success",
           message: "Data berhasil diinput mohon menunggu approval manager!",
+          onConfirm: () => window.location.reload(),
         });
         getHistoryAbsen();
         setSearchTanggal(false);
-        setForm({
-          employee: "",
-          tanggal: null,
-          previousInTime: null,
-          previousOutTime: null,
-          newInTime: null,
-          newOutTime: null,
-          alasan: null,
-        });
       }
     } catch (error) {
       setLoading(false);
@@ -306,7 +299,7 @@ const AbsensiKaryawan = () => {
 
   return (
     <>
-      <Header />
+      <Header menuName={"KOREKSI ABSENSI"} />
       <Container className="mt--7" fluid>
         <Row>
           <Col lg="24" xl="12">
@@ -330,7 +323,7 @@ const AbsensiKaryawan = () => {
                           onChange={(date, dateString) =>
                             handleDateChange("tanggal", date, dateString)
                           }
-                          className="w-100"
+                          className="w-100 form-control-alternative"
                           disabled={searchTanggal}
                           disabledDate={(current) =>
                             current && current > moment().endOf("day")
@@ -360,6 +353,7 @@ const AbsensiKaryawan = () => {
                           <FormGroup className="mb-3">
                             <Label for="alasan">Alasan</Label>
                             <Input
+                              className="form-control-alternative"
                               type="textarea"
                               name="alasan"
                               id="alasan"
@@ -388,12 +382,13 @@ const AbsensiKaryawan = () => {
                                   format="HH:mm"
                                   minuteStep={1}
                                   placeholder="Jam Masuk"
-                                  className="w-100"
+                                  className="w-100 form-control-alternative"
                                   disabled
                                 />
                               </Col>
                               <Col md={6}>
                                 <TimePicker
+                                  className="w-100 form-control-alternative"
                                   value={
                                     dataAbsensiKaryawan.clock_out
                                       ? moment(
@@ -405,7 +400,6 @@ const AbsensiKaryawan = () => {
                                   format="HH:mm"
                                   minuteStep={1}
                                   placeholder={"-"}
-                                  className="w-100"
                                   disabled
                                 />
                               </Col>
@@ -428,7 +422,7 @@ const AbsensiKaryawan = () => {
                                   format="HH:mm"
                                   minuteStep={1}
                                   placeholder="Jam Masuk"
-                                  className="w-100"
+                                  className="w-100 form-control-alternative"
                                 />
 
                                 {errors.newInTime && (
@@ -450,7 +444,7 @@ const AbsensiKaryawan = () => {
                                   format="HH:mm"
                                   minuteStep={1}
                                   placeholder="Jam Keluar"
-                                  className="w-100"
+                                  className="w-100 form-control-alternative"
                                 />
 
                                 {errors.newOutTime && (

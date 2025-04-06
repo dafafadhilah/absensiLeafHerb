@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Link, NavLink as NavLinkRRD, useNavigate } from "react-router-dom";
 import supabase from "utils/supabaseClient";
 import { PropTypes } from "prop-types";
@@ -15,12 +16,30 @@ import {
   DropdownItem,
   Media,
 } from "reactstrap";
+import { Badge } from "antd";
+import { useDispatch } from "react-redux";
+import { fetchNotificationCount } from "../../redux/action/notification";
 
 const Sidebar = (props) => {
   const navigate = useNavigate();
   const [collapseOpen, setCollapseOpen] = useState(false);
   const [jobCode, setJobCode] = useState(null);
+  const [count, setCount] = useState(0);
   const { bgColor, routes, logo } = props;
+  const dispatch = useDispatch();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    dispatch(fetchNotificationCount()); // Ambil data koreksi absensi & lembur saat Sidebar dimuat
+  }, [dispatch]);
+
+  const notificationCount = useSelector((state) => state.notification.count);
+
+  useEffect(() => {
+    setCount(
+      notificationCount.KoreksiAbsensi + notificationCount.PengajuanLembur
+    );
+  }, [notificationCount]);
 
   useEffect(() => {
     const fetchJobCode = async () => {
@@ -29,7 +48,7 @@ const Sidebar = (props) => {
 
       const { data, error } = await supabase
         .from("users")
-        .select("job_code")
+        .select("*")
         .eq("id", userId)
         .single();
 
@@ -38,6 +57,7 @@ const Sidebar = (props) => {
       } else {
         console.log(data.job_code);
         setJobCode(data.job_code);
+        setUser(data);
       }
     };
 
@@ -55,21 +75,46 @@ const Sidebar = (props) => {
 
   // **Filter routes berdasarkan jobCode**
   const filteredRoutes = routes.filter(
-    (route) => !route.allowedJobCodes || route.allowedJobCodes.includes(jobCode)
+    (route) =>
+      (!route.allowedJobCodes || route.allowedJobCodes.includes(jobCode)) &&
+      !route.hidden // <-- tambahkan ini
   );
 
+  const groupedRoutes = filteredRoutes.reduce((acc, route) => {
+    if (!acc[route.category]) {
+      acc[route.category] = []; // Pastikan diinisialisasi sebagai array
+    }
+    acc[route.category].push(route);
+    return acc;
+  }, {});
+
+  const hasTodolist = filteredRoutes.some((route) => route.name === "Todolist");
+
   const createLinks = (routes) =>
-    routes.map((prop, key) => (
-      <NavItem key={key}>
-        <NavLink
-          to={prop.layout + prop.path}
-          tag={NavLinkRRD}
-          onClick={closeCollapse}
-        >
-          <i className={prop.icon} />
-          {prop.name}
-        </NavLink>
-      </NavItem>
+    Object.keys(routes).map((category, index) => (
+      <div key={index}>
+        <h6 className="navbar-heading text-muted mb-n1 mt-2 px-3">
+          {category}
+        </h6>
+        {Array.isArray(routes[category]) &&
+          routes[category].map((prop, key) => (
+            <NavItem key={key}>
+              <NavLink
+                to={prop.layout + prop.path}
+                tag={NavLinkRRD}
+                onClick={closeCollapse} // Tambahkan ini agar sidebar tertutup saat menu diklik
+              >
+                <i className={prop.icon} />
+                {prop.name}
+                {prop.name === "Todolist" ? (
+                  <Badge count={count} className="ml-1"></Badge>
+                ) : (
+                  ""
+                )}
+              </NavLink>
+            </NavItem>
+          ))}
+      </div>
     ));
 
   return (
@@ -84,8 +129,15 @@ const Sidebar = (props) => {
           type="button"
           onClick={toggleCollapse}
         >
-          <span className="navbar-toggler-icon" />
+          {hasTodolist ? (
+            <Badge count={count}>
+              <span className="navbar-toggler-icon" />
+            </Badge>
+          ) : (
+            <span className="navbar-toggler-icon" />
+          )}
         </button>
+
         {logo ? (
           <Link className="navbar-brand pt-0" to={logo.innerLink}>
             <img
@@ -96,7 +148,7 @@ const Sidebar = (props) => {
           </Link>
         ) : null}
         <Nav className="align-items-center d-md-none">
-          <UncontrolledDropdown nav>
+          {/* <UncontrolledDropdown nav>
             <DropdownToggle nav className="nav-link-icon">
               <i className="ni ni-bell-55" />
             </DropdownToggle>
@@ -110,14 +162,18 @@ const Sidebar = (props) => {
               <DropdownItem divider />
               <DropdownItem>Something else here</DropdownItem>
             </DropdownMenu>
-          </UncontrolledDropdown>
+          </UncontrolledDropdown> */}
           <UncontrolledDropdown nav>
             <DropdownToggle nav>
               <Media className="align-items-center">
                 <span className="avatar avatar-sm rounded-circle">
                   <img
                     alt="..."
-                    src={require("../../assets/img/theme/default-image.jpg")}
+                    src={
+                      user?.profile_picture
+                        ? user?.profile_picture
+                        : require("../../assets/img/theme/default-image.jpg")
+                    }
                   />
                 </span>
               </Media>
@@ -130,18 +186,6 @@ const Sidebar = (props) => {
                 <i className="ni ni-single-02" />
                 <span>My profile</span>
               </DropdownItem>
-              <DropdownItem to="/admin/user-profile" tag={Link}>
-                <i className="ni ni-settings-gear-65" />
-                <span>Settings</span>
-              </DropdownItem>
-              <DropdownItem to="/admin/user-profile" tag={Link}>
-                <i className="ni ni-calendar-grid-58" />
-                <span>Activity</span>
-              </DropdownItem>
-              <DropdownItem to="/admin/user-profile" tag={Link}>
-                <i className="ni ni-support-16" />
-                <span>Support</span>
-              </DropdownItem>
               <DropdownItem divider />
               <DropdownItem onClick={handleLogout}>
                 <i className="ni ni-user-run" />
@@ -151,7 +195,7 @@ const Sidebar = (props) => {
           </UncontrolledDropdown>
         </Nav>
         <Collapse navbar isOpen={collapseOpen}>
-          <Nav navbar>{createLinks(filteredRoutes)}</Nav>
+          <Nav navbar>{createLinks(groupedRoutes)}</Nav>
         </Collapse>
       </Container>
     </Navbar>

@@ -1,15 +1,36 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
+// protectedRoute.js
+import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import supabase from "utils/supabaseClient";
 
-const ProtectedRoute = ({ allowedJobCodes }) => {
-  const userJobCode = useSelector((state) => state.auth.user?.jobCode);
+const ProtectedRoute = ({ allowedJobCodes, children }) => {
+  const [isAllowed, setIsAllowed] = useState(null);
 
-  // Kalau jobCode user nggak diizinin, redirect ke unauthorized
-  if (allowedJobCodes && !allowedJobCodes.includes(userJobCode)) {
-    return <Navigate to="/admin/unauthorized" replace />;
-  }
+  useEffect(() => {
+    const fetchUser = async () => {
+      const userId = localStorage.getItem("userId");
+      if (!userId) return setIsAllowed(false);
 
-  return <Outlet />;
+      const { data, error } = await supabase
+        .from("users")
+        .select("job_code")
+        .eq("id", userId)
+        .single();
+
+      if (error || !allowedJobCodes.includes(data.job_code)) {
+        setIsAllowed(false);
+        return;
+      }
+
+      setIsAllowed(true);
+    };
+
+    fetchUser();
+  }, [allowedJobCodes]);
+
+  if (isAllowed === null) return <div>Loading...</div>;
+  if (isAllowed === false) return <Navigate to="/admin/unauthorized" replace />;
+  return children;
 };
 
 export default ProtectedRoute;

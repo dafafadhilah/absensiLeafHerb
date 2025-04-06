@@ -9,11 +9,18 @@ import ForgotPassword from "views/examples/ForgotPassword";
 import ResetPassword from "views/examples/ResetPassword";
 import Absensi from "views/employee/Absensi";
 import KoreksiAbsensi from "views/employee/KoreksiAbsensi";
-import AbsensiKaryawan from "views/boss/AbsensiKaryawan";
+import RekapAbsensi from "views/boss/RekapAbsensi";
+import RekapGaji from "views/boss/RekapGaji";
 import Todolist from "views/boss/Todolist";
+import PengajuanLembur from "views/employee/PengajuanLembur";
+import Perizinan from "views/employee/Perizinan";
+import Unauthorized from "views/Unauthorized";
+import ProtectedRoute from "protectedRoute"; // Proteksi halaman admin
 
 var routes = [
+  // Menu Utama
   {
+    category: "Menu Utama",
     path: "/index",
     name: "Dashboard",
     icon: "ni ni-tv-2 text-primary",
@@ -21,69 +28,162 @@ var routes = [
     layout: "/admin",
   },
   {
-    path: "/icons",
-    name: "Icons",
-    icon: "ni ni-planet text-blue",
-    component: <Icons />,
-    layout: "/admin",
-    allowedJobCodes: ["template"],
-  },
-  {
-    path: "/maps",
-    name: "Maps",
-    icon: "ni ni-pin-3 text-orange",
-    component: <Maps />,
-    layout: "/admin",
-    allowedJobCodes: ["template"],
-  },
-  {
+    category: "Menu Utama",
     path: "/user-profile",
     name: "User Profile",
-    icon: "ni ni-single-02 text-yellow",
+    icon: "ni ni-single-02 text-dark",
     component: <Profile />,
     layout: "/admin",
   },
+
+  // Menu Template
   {
-    path: "/absensi",
-    name: "Absensi",
-    icon: "ni ni-tag text-green",
-    component: <Absensi />,
+    category: "Menu Template",
+    path: "/icons",
+    name: "Icons",
+    icon: "ni ni-planet text-blue",
+    component: (
+      <ProtectedRoute allowedJobCodes={["template", "admin"]}>
+        <Icons />
+      </ProtectedRoute>
+    ),
     layout: "/admin",
-    allowedJobCodes: ["employee"],
+    allowedJobCodes: ["template", "admin"],
   },
   {
-    path: "/koreksiAbsensi",
-    name: "Request Koreksi Absensi",
-    icon: "ni ni-ui-04 text-orange",
-    component: <KoreksiAbsensi />,
+    category: "Menu Template",
+    path: "/maps",
+    name: "Maps",
+    icon: "ni ni-pin-3 text-orange",
+    component: (
+      <ProtectedRoute allowedJobCodes={["template", "admin"]}>
+        <Maps />
+      </ProtectedRoute>
+    ),
     layout: "/admin",
-    allowedJobCodes: ["employee"],
+    allowedJobCodes: ["template", "admin"],
   },
   {
-    path: "/absensiKaryawan",
-    name: "Absensi Karyawan",
-    icon: "ni ni-tag text-green",
-    component: <AbsensiKaryawan />,
-    layout: "/admin",
-    allowedJobCodes: ["boss"],
-  },
-  {
-    path: "/todolist",
-    name: "Todolist",
-    icon: "ni ni-check-bold text-blue",
-    component: <Todolist />,
-    layout: "/admin",
-    allowedJobCodes: ["boss"],
-  },
-  {
+    category: "Menu Template",
     path: "/tables",
     name: "Tables",
     icon: "ni ni-bullet-list-67 text-red",
-    component: <Tables />,
+    component: (
+      <ProtectedRoute allowedJobCodes={["template", "admin"]}>
+        <Tables />
+      </ProtectedRoute>
+    ),
     layout: "/admin",
-    allowedJobCodes: ["template"],
+    allowedJobCodes: ["template", "admin"],
   },
   {
+    category: "Menu Template",
+    path: "/unauthorized",
+    name: "Unauthorized",
+    icon: "ni ni-bullet-list-67 text-red",
+    component: <Unauthorized />,
+    layout: "/admin",
+    hidden: true, // <- tambahkan ini
+  },
+
+  // Menu Karyawan
+  {
+    category: "Menu Karyawan",
+    path: "/absensi",
+    name: "Absensi",
+    icon: "ni ni-tag text-green",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew", "admin"]}>
+        <Absensi />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew", "admin"],
+  },
+  {
+    category: "Menu Karyawan",
+    path: "/koreksiAbsensi",
+    name: "Request Koreksi Absensi",
+    icon: "ni ni-ui-04 text-orange",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew", "admin"]}>
+        <KoreksiAbsensi />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew", "admin"],
+  },
+  {
+    category: "Menu Karyawan",
+    path: "/pengajuanLembur",
+    name: "Pengajuan Lembur",
+    icon: "ni ni-money-coins text-yellow",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew", "admin"]}>
+        <PengajuanLembur />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew", "admin"],
+  },
+  {
+    category: "Menu Karyawan",
+    path: "/perizinan",
+    name: "Perizinan",
+    icon: "ni ni-ruler-pencil text-gray",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew", "admin"]}>
+        <Perizinan />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew", "admin"],
+  },
+
+  // Menu Manager
+  {
+    category: "Menu Manager",
+    path: "/rekapAbsensi",
+    name: "Rekap Absensi",
+    icon: "ni ni-tag text-green",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew Leader", "admin"]}>
+        <RekapAbsensi />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew Leader", "admin"],
+  },
+  {
+    category: "Menu Manager",
+    path: "/rekapGaji",
+    name: "Rekap Gaji",
+    icon: "ni ni-money-coins text-yellow",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew Leader", "admin"]}>
+        <RekapGaji />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew Leader", "admin"],
+  },
+  {
+    category: "Menu Manager",
+    path: "/todolist",
+    name: "Todolist",
+    icon: "ni ni-check-bold text-blue",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew Leader", "admin"]}>
+        <Todolist />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew Leader", "admin"],
+  },
+
+  // Menu Pendaftaran
+  {
+    category: "Menu Pendaftaran",
     path: "/register",
     name: "Register",
     icon: "ni ni-bullet-list-67 text-red",
@@ -92,6 +192,7 @@ var routes = [
     allowedJobCodes: ["auth"],
   },
   {
+    category: "Menu Pendaftaran",
     path: "/login",
     name: "Login",
     icon: "ni ni-bullet-list-67 text-red",
@@ -100,6 +201,7 @@ var routes = [
     allowedJobCodes: ["auth"],
   },
   {
+    category: "Menu Pendaftaran",
     path: "/forgotPassword",
     name: "ForgotPassword",
     icon: "ni ni-bullet-list-67 text-red",
@@ -108,6 +210,7 @@ var routes = [
     allowedJobCodes: ["auth"],
   },
   {
+    category: "Menu Pendaftaran",
     path: "/resetPassword",
     name: "ResetPassword",
     icon: "ni ni-bullet-list-67 text-red",
