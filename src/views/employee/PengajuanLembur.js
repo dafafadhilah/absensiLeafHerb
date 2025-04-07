@@ -74,7 +74,7 @@ const AbsensiKaryawan = () => {
     const { data, error } = await supabase
       .from("overtime_requests")
       .select(
-        "id, overtime_date, overtime_in, overtime_out, reason, status, users:user_id(email, name)"
+        "id, overtime_date, overtime_in, overtime_out, reason, status, total_hours, users:user_id(email, name), users2:created_by(name)"
       ) // Join dengan tabel users
       .eq("user_id", userId)
       .order("request_date", { ascending: false });
@@ -176,6 +176,7 @@ const AbsensiKaryawan = () => {
           overtime_in: form.lemburIn,
           overtime_out: form.lemburOut,
           reason: form.alasan,
+          created_by: userId,
         },
       ]);
 
@@ -346,14 +347,16 @@ const AbsensiKaryawan = () => {
                     <th scope="col">Tanggal</th>
                     <th scope="col">Jam Masuk Lembur</th>
                     <th scope="col">Jam Pulang Lembur</th>
+                    <th scope="col">Total Jam</th>
                     <th scope="col">Alasan</th>
+                    <th scope="col">Dibuat Oleh</th>
                     <th scope="col">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loadingTab ? (
                     <tr>
-                      <td colSpan="5" className="text-center">
+                      <td colSpan="7" className="text-center">
                         <span className="spinner-border spinner-border-sm"></span>
                       </td>
                     </tr>
@@ -367,7 +370,9 @@ const AbsensiKaryawan = () => {
                         </td>
                         <td>{item.overtime_in}</td>
                         <td>{item.overtime_out}</td>
+                        <td>{item.total_hours}</td>
                         <td>{item.reason}</td>
+                        <td>{item.users2.name}</td>
                         <td>
                           <Button
                             color={
@@ -385,7 +390,7 @@ const AbsensiKaryawan = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="text-center">
+                      <td colSpan="7" className="text-center">
                         No Data Found
                       </td>
                     </tr>

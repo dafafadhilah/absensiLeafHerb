@@ -286,7 +286,7 @@ const RekapAbsensi = (props) => {
     for (let i = 1; i <= daysInMonth; i++) {
       header1.push(i.toString()); // Menambahkan nomor hari 1, 2, 3, dst
     }
-    header1.push("Hadir", "Hadir* (W)", "Izin", "Sakit", "Cuti", "Tidak Hadir"); // Kolom untuk total Hadir dan Tidak Hadir
+    header1.push("Hadir", "Hadir* (W)", "Izin", "Sakit", "Tidak Hadir"); // Kolom untuk total Hadir dan Tidak Hadir
     excelData.push(header1);
 
     // Menyusun data untuk setiap karyawan
@@ -311,7 +311,6 @@ const RekapAbsensi = (props) => {
           hadirWarning: 0,
           izin: 0,
           sakit: 0,
-          cuti: 0,
         };
       }
 
@@ -327,9 +326,6 @@ const RekapAbsensi = (props) => {
       } else if (item.status === "Izin") {
         employeeData[employeeName].days[day - 1] = "I"; // Tandai hadir (O)
         employeeData[employeeName].izin++;
-      } else if (item.status === "Cuti") {
-        employeeData[employeeName].days[day - 1] = "C"; // Tandai hadir (O)
-        employeeData[employeeName].cuti++;
       } else if (isHadir) {
         employeeData[employeeName].days[day - 1] = "O"; // Tandai hadir (O)
         employeeData[employeeName].hadir++;
@@ -349,7 +345,6 @@ const RekapAbsensi = (props) => {
         employee.hadirWarning,
         employee.izin,
         employee.sakit,
-        employee.cuti,
         daysInMonth - employee.hadir - employee.hadirWarning,
       ];
       excelData.push(row);
@@ -364,13 +359,11 @@ const RekapAbsensi = (props) => {
     const info2 = ["X : TIDAK HADIR"];
     const info3 = ["I : IZIN"];
     const info4 = ["S : SAKIT"];
-    const info5 = ["C : CUTI"];
     const info6 = ["W : HADIR tetapi jam masuk / jam pulang perlu di revisi"];
     excelData.push(info1);
     excelData.push(info2);
     excelData.push(info3);
     excelData.push(info4);
-    excelData.push(info5);
     excelData.push(info6);
 
     // Membuat worksheet dan workbook
@@ -414,115 +407,119 @@ const RekapAbsensi = (props) => {
         <Row>
           <Col lg="24" xl="12">
             <Card className="card-stats mb-4 mb-xl-0">
-              <Col lg="12" xl="6">
-                <CardBody>
-                  <CardTitle
-                    tag="h5"
-                    className="text-uppercase text-muted mb-3"
-                  >
-                    Form Absensi
-                  </CardTitle>
-                  <Form onSubmit={handleSubmit}>
-                    {/* Input Nama Karyawan */}
-                    <FormGroup className="mb-3">
-                      <Label for="karyawan">Karyawan</Label>
-                      <InputGroup className="input-group-alternative">
-                        <InputGroupAddon addonType="prepend">
-                          <InputGroupText>
-                            <i className="ni ni-single-02" />
-                          </InputGroupText>
-                        </InputGroupAddon>
-                        <Input
-                          className="form-control-alternative"
-                          type="select"
-                          name="employee"
-                          value={form.employee}
-                          onChange={handleChange}
-                        >
-                          <option value="">Pilih Karyawan</option>
-                          <option value="ALL">ALL</option>
-                          {dataKaryawan.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </Input>
-                      </InputGroup>
-                      {errors.employee && (
-                        <small className="text-danger">{errors.employee}</small>
-                      )}
-                    </FormGroup>
+              <Row>
+                <Col lg="12" xl="6">
+                  <CardBody>
+                    <CardTitle
+                      tag="h5"
+                      className="text-uppercase text-muted mb-3"
+                    >
+                      Form Absensi
+                    </CardTitle>
+                    <Form onSubmit={handleSubmit}>
+                      {/* Input Nama Karyawan */}
+                      <FormGroup className="mb-3">
+                        <Label for="karyawan">Karyawan</Label>
+                        <InputGroup className="input-group-alternative">
+                          <InputGroupAddon addonType="prepend">
+                            <InputGroupText>
+                              <i className="ni ni-single-02" />
+                            </InputGroupText>
+                          </InputGroupAddon>
+                          <Input
+                            className="form-control-alternative"
+                            type="select"
+                            name="employee"
+                            value={form.employee}
+                            onChange={handleChange}
+                          >
+                            <option value="">Pilih Karyawan</option>
+                            <option value="ALL">ALL</option>
+                            {dataKaryawan.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.name}
+                              </option>
+                            ))}
+                          </Input>
+                        </InputGroup>
+                        {errors.employee && (
+                          <small className="text-danger">
+                            {errors.employee}
+                          </small>
+                        )}
+                      </FormGroup>
 
-                    {/* Dropdown Bulan */}
-                    <FormGroup className="mb-3">
-                      <Label for="bulan">Bulan</Label>
-                      <InputGroup className="input-group-alternative">
-                        <InputGroupAddon addonType="prepend">
-                          <InputGroupText>
-                            <i className="ni ni-calendar-grid-58" />
-                          </InputGroupText>
-                        </InputGroupAddon>
-                        <Input
-                          className="form-control-alternative"
-                          type="select"
-                          name="month"
-                          value={form.month}
-                          onChange={handleChange}
-                        >
-                          {moment.months().map((name, index) => (
-                            <option key={index + 1} value={index + 1}>
-                              {name}
-                            </option>
-                          ))}
-                        </Input>
-                      </InputGroup>
-                      {errors.month && (
-                        <small className="text-danger">{errors.month}</small>
-                      )}
-                    </FormGroup>
+                      {/* Dropdown Bulan */}
+                      <FormGroup className="mb-3">
+                        <Label for="bulan">Bulan</Label>
+                        <InputGroup className="input-group-alternative">
+                          <InputGroupAddon addonType="prepend">
+                            <InputGroupText>
+                              <i className="ni ni-calendar-grid-58" />
+                            </InputGroupText>
+                          </InputGroupAddon>
+                          <Input
+                            className="form-control-alternative"
+                            type="select"
+                            name="month"
+                            value={form.month}
+                            onChange={handleChange}
+                          >
+                            {moment.months().map((name, index) => (
+                              <option key={index + 1} value={index + 1}>
+                                {name}
+                              </option>
+                            ))}
+                          </Input>
+                        </InputGroup>
+                        {errors.month && (
+                          <small className="text-danger">{errors.month}</small>
+                        )}
+                      </FormGroup>
 
-                    {/* Dropdown Tahun */}
-                    <FormGroup className="mb-3">
-                      <Label for="tahun">Tahun</Label>
-                      <InputGroup className="input-group-alternative">
-                        <InputGroupAddon addonType="prepend">
-                          <InputGroupText>
-                            <i className="ni ni-watch-time" />
-                          </InputGroupText>
-                        </InputGroupAddon>
-                        <Input
-                          className="form-control-alternative"
-                          type="select"
-                          name="year"
-                          value={form.year}
-                          onChange={handleChange}
-                        >
-                          {Array.from(
-                            { length: 5 },
-                            (_, i) => moment().year() - i
-                          ).map((y) => (
-                            <option key={y} value={y}>
-                              {y}
-                            </option>
-                          ))}
-                        </Input>
-                      </InputGroup>
-                      {errors.year && (
-                        <small className="text-danger">{errors.year}</small>
-                      )}
-                    </FormGroup>
+                      {/* Dropdown Tahun */}
+                      <FormGroup className="mb-3">
+                        <Label for="tahun">Tahun</Label>
+                        <InputGroup className="input-group-alternative">
+                          <InputGroupAddon addonType="prepend">
+                            <InputGroupText>
+                              <i className="ni ni-watch-time" />
+                            </InputGroupText>
+                          </InputGroupAddon>
+                          <Input
+                            className="form-control-alternative"
+                            type="select"
+                            name="year"
+                            value={form.year}
+                            onChange={handleChange}
+                          >
+                            {Array.from(
+                              { length: 5 },
+                              (_, i) => moment().year() - i
+                            ).map((y) => (
+                              <option key={y} value={y}>
+                                {y}
+                              </option>
+                            ))}
+                          </Input>
+                        </InputGroup>
+                        {errors.year && (
+                          <small className="text-danger">{errors.year}</small>
+                        )}
+                      </FormGroup>
 
-                    <div className="d-flex justify-content-end">
-                      <Button color="primary" type="submit">
-                        Search
-                      </Button>
-                      <Button color="dark" onClick={exportToExcel}>
-                        Download
-                      </Button>
-                    </div>
-                  </Form>
-                </CardBody>
-              </Col>
+                      <div className="d-flex justify-content-end">
+                        <Button color="primary" type="submit">
+                          Search
+                        </Button>
+                        <Button color="dark" onClick={exportToExcel}>
+                          Download
+                        </Button>
+                      </div>
+                    </Form>
+                  </CardBody>
+                </Col>
+              </Row>
             </Card>
           </Col>
         </Row>

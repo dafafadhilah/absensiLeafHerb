@@ -223,7 +223,6 @@ const Perizinan = () => {
                         >
                           <option value="">Pilih Perizinan</option>
                           <option value="Izin">Izin</option>
-                          <option value="Cuti">Cuti</option>
                           <option value="Sakit">Sakit</option>
                         </Input>
                         {errors.izin && (

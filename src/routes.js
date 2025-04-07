@@ -11,6 +11,7 @@ import Absensi from "views/employee/Absensi";
 import KoreksiAbsensi from "views/employee/KoreksiAbsensi";
 import RekapAbsensi from "views/boss/RekapAbsensi";
 import RekapGaji from "views/boss/RekapGaji";
+import RekapLembur from "views/boss/RekapLembur";
 import Todolist from "views/boss/Todolist";
 import PengajuanLembur from "views/employee/PengajuanLembur";
 import Perizinan from "views/employee/Perizinan";
@@ -127,7 +128,7 @@ var routes = [
     category: "Menu Karyawan",
     path: "/pengajuanLembur",
     name: "Pengajuan Lembur",
-    icon: "ni ni-money-coins text-yellow",
+    icon: "ni ni-spaceship text-red",
     component: (
       <ProtectedRoute allowedJobCodes={["crew", "admin"]}>
         <PengajuanLembur />
@@ -140,7 +141,7 @@ var routes = [
     category: "Menu Karyawan",
     path: "/perizinan",
     name: "Perizinan",
-    icon: "ni ni-ruler-pencil text-gray",
+    icon: "ni ni-ruler-pencil text-blue",
     component: (
       <ProtectedRoute allowedJobCodes={["crew", "admin"]}>
         <Perizinan />
@@ -172,6 +173,19 @@ var routes = [
     component: (
       <ProtectedRoute allowedJobCodes={["crew Leader", "admin"]}>
         <RekapGaji />
+      </ProtectedRoute>
+    ),
+    layout: "/admin",
+    allowedJobCodes: ["crew Leader", "admin"],
+  },
+  {
+    category: "Menu Crew Leader",
+    path: "/rekapLembur",
+    name: "Rekap Lembur",
+    icon: "ni ni-spaceship text-red",
+    component: (
+      <ProtectedRoute allowedJobCodes={["crew Leader", "admin"]}>
+        <RekapLembur />
       </ProtectedRoute>
     ),
     layout: "/admin",

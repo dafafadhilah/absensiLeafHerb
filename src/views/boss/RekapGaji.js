@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { Spin } from "antd";
+import { useEffect, useState, useRef } from "react";
 import {
   Button,
   Card,
   CardBody,
+  CardFooter,
+  CardHeader,
   CardTitle,
   Col,
   Container,
@@ -12,19 +15,17 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupText,
-  Row,
   Label,
+  Row,
   Table,
 } from "reactstrap";
-import { Spin } from "antd";
 
 import Header from "components/Headers/Header.js";
 import moment from "moment";
 import "moment/locale/id";
 import supabase from "utils/supabaseClient";
-import * as XLSX from "xlsx";
-import CustomModal from "../../components/CustomModal";
 import logo from "../../assets/img/brand/leafherb-removebg-preview.png";
+import CustomModal from "../../components/CustomModal";
 
 import jsPDF from "jspdf";
 import "jspdf-autotable"; // Tanpa menggunakan `as autoTable`
@@ -39,7 +40,10 @@ const RekapGaji = (props) => {
   const [form, setForm] = useState({
     gaji: 1500000,
     lembur: 0,
+    bonus: 0,
+    hadiah: 0,
     potongan: 0,
+    tanggal: moment().format("YYYY-MM-DD"),
     employee: "",
     month: moment().month() + 1, // Default bulan sekarang
     year: moment().year(), // Default tahun sekarang
@@ -54,6 +58,21 @@ const RekapGaji = (props) => {
   const [searchCondition, setSearchCodition] = useState(false);
   const [errors, setErrors] = useState({});
   const [dataKaryawan, setDataKaryawan] = useState([]);
+  const [dataPenghasilan, setDataPenghasilan] = useState([]);
+  const [dataPotongan, setDataPotongan] = useState([]);
+  const inputRef = useRef(null);
+
+  const handleClick = () => {
+    if (inputRef.current) {
+      // Browser modern (Chrome, Edge, dll)
+      if (inputRef.current.showPicker) {
+        inputRef.current.showPicker();
+      } else {
+        // Fallback untuk browser lama
+        inputRef.current.click();
+      }
+    }
+  };
 
   useEffect(() => {
     getDataKaryawan();
@@ -182,7 +201,23 @@ const RekapGaji = (props) => {
   };
 
   const exportSlipGaji = () => {
-    const doc = new jsPDF("l", "mm", "a4");
+    let bool = false;
+    dataPenghasilan.map((item) => {
+      if (!item.total || !item.name) {
+        bool = true;
+        return;
+      }
+    });
+    if (bool) {
+      setModal({
+        visible: true,
+        type: "error",
+        message: "Mohon pastikan seluruh total penghasilan sudah terisi!",
+      });
+      return false;
+    }
+
+    const doc = new jsPDF("p", "mm", "a4"); // Ubah dari "l" ke "p"
 
     const employee = dataKaryawan.find((item) => item.id === form.employee);
     const monthName = moment(`${form.year}-${form.month}`, "YYYY-M").format(
@@ -190,17 +225,16 @@ const RekapGaji = (props) => {
     );
     const lastDay = new Date(form.year, form.month, 0).getDate();
 
-    const pageWidth = doc.internal.pageSize.width; // Lebar halaman
-    const logoWidth = 60; // Ukuran logo
+    const pageWidth = doc.internal.pageSize.width; // Lebar halaman A4 potrait = 210mm
+    const halfPage = (pageWidth - 20) / 2;
+    const logoWidth = 60;
     const logoHeight = 20;
-    const centerX = (pageWidth - logoWidth) / 2; // Posisi tengah
+    const centerX = (pageWidth - logoWidth) / 2;
 
-    // Load logo dan tambahkan ke PDF
-    // Load logo dan tambahkan ke PDF
     doc.addImage(logo, "JPEG", centerX, 7, logoWidth, logoHeight);
 
-    // Header (Dipindahkan ke bawah gambar)
-    const headerY = logoHeight + 15; // Posisi setelah gambar (60 + 10 = 70)
+    // Header
+    const headerY = logoHeight + 15;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("SLIP GAJI KARYAWAN", pageWidth / 2, headerY, { align: "center" });
@@ -209,15 +243,15 @@ const RekapGaji = (props) => {
     doc.text(
       `Periode 1 ${monthName} ${form.year} - ${lastDay} ${monthName} ${form.year}`,
       pageWidth / 2,
-      headerY + 8, // Geser ke bawah agar tidak bertabrakan
+      headerY + 8,
       { align: "center" }
     );
 
-    // Tabel 1: Informasi Karyawan (Dimulai lebih bawah lagi)
+    // Tabel 1: Info Karyawan
     doc.autoTable({
-      startY: headerY + 15, // Setelah teks header
+      startY: headerY + 15,
       margin: { left: 10 },
-      tableWidth: 135,
+      tableWidth: pageWidth - 20, // full width dengan margin 10 kanan-kiri
       body: [
         ["COMPANY", ": LeafHerb"],
         ["NAME", ": " + employee.name],
@@ -226,70 +260,96 @@ const RekapGaji = (props) => {
       styles: { halign: "left" },
       columnStyles: {
         0: { cellWidth: 40, halign: "left" },
-        1: { cellWidth: 95, halign: "left" },
+        1: { cellWidth: pageWidth - 60, halign: "left" },
       },
     });
 
-    const startY2 = doc.lastAutoTable.finalY + 10;
-    const halfPage = pageWidth / 2; // Tengah halaman
+    const startY2 = doc.lastAutoTable.finalY + 5;
 
-    // Tabel 2: Penghasilan (Kiri - 50%)
+    let sumPenghasilan = 0;
+    dataPenghasilan.forEach((item) => {
+      sumPenghasilan += Number(item.total);
+    });
+    const marginLeft = 10;
+    const gap = 10;
+    const tableWidth = (pageWidth - marginLeft * 2 - gap) / 2; // hasilnya 90
+
+    // Tabel 2: PENGHASILAN
     doc.autoTable({
       startY: startY2,
-      margin: { left: 10 }, // Mulai dari kiri
-      tableWidth: 135, // 50% dari halaman
+      margin: { left: marginLeft }, // 10
+      tableWidth: tableWidth, // 90
       head: [["PENGHASILAN", "JUMLAH"]],
       body: [
         ["GAJI POKOK", "Rp. " + formatRupiah(form.gaji)],
         ["LEMBUR", "Rp. " + formatRupiah(form.lembur)],
+        ...dataPenghasilan.map((item) => {
+          return [item.name.toUpperCase(), "Rp. " + formatRupiah(item.total)];
+        }),
         [
           { content: "TOTAL PENGHASILAN", styles: { fontStyle: "bold" } },
           {
             content:
-              "Rp. " + formatRupiah(Number(form.gaji) + Number(form.lembur)),
+              "Rp. " +
+              formatRupiah(
+                Number(form.gaji) + Number(form.lembur) + sumPenghasilan
+              ),
             styles: { fontStyle: "bold" },
           },
         ],
       ],
       styles: { halign: "left" },
-      columnStyles: { 0: { halign: "left" } },
+      columnStyles: { 0: { halign: "left" }, 1: { halign: "left" } },
+    });
+    const penghasilanY = doc.lastAutoTable.finalY;
+
+    let sumPotongan = 0;
+    dataPotongan.forEach((item) => {
+      sumPotongan += Number(item.total);
     });
 
-    // Tabel 3: Potongan (Kanan - 50%)
+    // Tabel 3: POTONGAN
     doc.autoTable({
       startY: startY2,
-      margin: { left: halfPage }, // Geser ke tengah halaman
-      tableWidth: 135, // 50% dari halaman
+      margin: { left: marginLeft + tableWidth + gap }, // 10 + 90 + 10 = 110
+      tableWidth: tableWidth, // 90
       head: [["POTONGAN", "JUMLAH"]],
       body: [
+        ...dataPotongan.map((item) => [
+          item.name.toUpperCase(),
+          "Rp. " + formatRupiah(item.total),
+        ]),
         [
           { content: "TOTAL POTONGAN", styles: { fontStyle: "bold" } },
           {
-            content: "Rp. " + formatRupiah(form.potongan),
+            content: "Rp. " + formatRupiah(sumPotongan),
             styles: { fontStyle: "bold" },
           },
         ],
       ],
       styles: { halign: "left" },
-      columnStyles: { 0: { halign: "left" } },
+      columnStyles: { 0: { halign: "left" }, 1: { halign: "left" } },
     });
+    const potonganY = doc.lastAutoTable.finalY;
+    const startY4 = Math.max(penghasilanY, potonganY) + 10;
 
-    const startY4 = doc.lastAutoTable.finalY + 30;
-
-    // Tabel 4: Penerimaan Bersih
+    // Tabel 4: PENERIMAAN BERSIH
     doc.autoTable({
       startY: startY4,
-      margin: { left: 10 }, // Mulai dari kiri
+      margin: { left: 10 },
+      tableWidth: pageWidth - 20,
       head: [["PENERIMAAN BERSIH"]],
       body: [
         [
           "Rp. " +
             formatRupiah(
-              Number(form.gaji) + Number(form.lembur) - Number(form.potongan)
+              Number(form.gaji) +
+                Number(form.lembur) +
+                sumPenghasilan -
+                sumPotongan
             ),
         ],
       ],
-      // theme: "plain", // Hapus garis tabel
       styles: { halign: "center", fontStyle: "bold" },
     });
 
@@ -304,19 +364,106 @@ const RekapGaji = (props) => {
     // Tabel 5: TTD
     doc.autoTable({
       startY: startY5,
-      margin: { left: halfPage }, // Geser ke tengah halaman
-      tableWidth: 190, // 50% dari halaman
-      head: [["Depok, " + today]],
+      margin: { left: marginLeft + tableWidth + gap + 10 },
+      tableWidth: 100,
+      head: [["Depok, " + moment(form.tanggal).format("DD MMMM YYYY")]],
       body: [["Crew Leader"], [""], [""], [""], ["Jailani Syawaluddin"]],
-      theme: "plain", // Hapus garis tabel
+      theme: "plain",
       styles: { halign: "center", fontSize: 12 },
       columnStyles: {
         0: { halign: "center", fontSize: 12, fontStyle: "bold" },
       },
+      pageBreak: "avoid",
     });
 
-    // Simpan PDF
-    doc.save("Slip_Gaji.pdf");
+    // Simpan
+    doc.save(`Slip_Gaji_${employee.name}.pdf`);
+  };
+
+  const addPenghasilan = () => {
+    let bool = false;
+    dataPenghasilan.map((item) => {
+      if (!item.total || !item.name) {
+        bool = true;
+        return;
+      }
+    });
+    if (bool) {
+      setModal({
+        visible: true,
+        type: "error",
+        message: "Mohon pastikan seluruh data penghasilan sudah terisi!",
+      });
+      return false;
+    }
+    setDataPenghasilan((prev) => [
+      ...prev,
+      {
+        name: "",
+        total: "",
+      },
+    ]);
+  };
+
+  const handleChangePenghasilan = (index, e) => {
+    const { name, value } = e.target;
+    setDataPenghasilan((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              [name]: name === "total" ? value.replace(/\D/g, "") : value,
+            }
+          : item
+      )
+    );
+  };
+
+  const handleDeletePenghasilan = (index) => {
+    setDataPenghasilan((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addPotongan = () => {
+    let bool = false;
+    dataPotongan.map((item) => {
+      if (!item.total || !item.name) {
+        bool = true;
+        return;
+      }
+    });
+    if (bool) {
+      setModal({
+        visible: true,
+        type: "error",
+        message: "Mohon pastikan seluruh data potongan sudah terisi!",
+      });
+      return false;
+    }
+    setDataPotongan((prev) => [
+      ...prev,
+      {
+        name: "",
+        total: "",
+      },
+    ]);
+  };
+
+  const handleChangePotongan = (index, e) => {
+    const { name, value } = e.target;
+    setDataPotongan((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              [name]: name === "total" ? value.replace(/\D/g, "") : value,
+            }
+          : item
+      )
+    );
+  };
+
+  const handleDeletePotongan = (index) => {
+    setDataPotongan((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -353,6 +500,7 @@ const RekapGaji = (props) => {
                               name="employee"
                               value={form.employee}
                               onChange={handleChange}
+                              disabled={searchCondition}
                             >
                               <option value="">Pilih Karyawan</option>
                               {dataKaryawan.map((item) => (
@@ -383,6 +531,7 @@ const RekapGaji = (props) => {
                               name="month"
                               value={form.month}
                               onChange={handleChange}
+                              disabled={searchCondition}
                             >
                               {moment.months().map((name, index) => (
                                 <option key={index + 1} value={index + 1}>
@@ -412,6 +561,7 @@ const RekapGaji = (props) => {
                               name="year"
                               value={form.year}
                               onChange={handleChange}
+                              disabled={searchCondition}
                             >
                               {Array.from(
                                 { length: 5 },
@@ -429,7 +579,11 @@ const RekapGaji = (props) => {
                         </FormGroup>
 
                         <div className="d-flex justify-content-end">
-                          <Button color="primary" type="submit">
+                          <Button
+                            color="primary"
+                            type="submit"
+                            disabled={searchCondition}
+                          >
                             Search
                           </Button>
                         </div>
@@ -444,6 +598,30 @@ const RekapGaji = (props) => {
                           className="text-uppercase text-muted mb-3"
                         ></CardTitle>
                         <Form>
+                          <FormGroup className="mb-3">
+                            <Label for="tanggal">Tanggal TTD</Label>
+                            <InputGroup className="input-group-alternative">
+                              <InputGroupAddon addonType="prepend">
+                                <InputGroupText>
+                                  <i className="ni ni-calendar-grid-58" />
+                                </InputGroupText>
+                              </InputGroupAddon>
+                              <Input
+                                innerRef={inputRef}
+                                className="form-control-alternative"
+                                type="date"
+                                name="tanggal"
+                                value={form.tanggal}
+                                onChange={handleChange}
+                                onClick={handleClick}
+                              />
+                            </InputGroup>
+                            {errors.tanggal && (
+                              <small className="text-danger">
+                                {errors.tanggal}
+                              </small>
+                            )}
+                          </FormGroup>
                           <FormGroup className="mb-3">
                             <Label for="gaji">Gaji</Label>
                             <InputGroup className="input-group-alternative">
@@ -471,7 +649,7 @@ const RekapGaji = (props) => {
                             <InputGroup className="input-group-alternative">
                               <InputGroupAddon addonType="prepend">
                                 <InputGroupText>
-                                  <i className="ni ni-money-coins" />
+                                  <i className="ni ni-fat-add" />
                                 </InputGroupText>
                               </InputGroupAddon>
                               <Input
@@ -521,6 +699,12 @@ const RekapGaji = (props) => {
                           </FormGroup>
 
                           <div className="d-flex justify-content-end">
+                            <Button
+                              color="danger"
+                              onClick={() => setSearchCodition(false)}
+                            >
+                              Cancel
+                            </Button>
                             <Button color="dark" onClick={exportSlipGaji}>
                               Cetak Slip Gaji
                             </Button>
@@ -536,6 +720,167 @@ const RekapGaji = (props) => {
             </Spin>
           </Col>
         </Row>
+        {searchCondition ? (
+          <Row className="mt-4">
+            {/* Kartu Kiri */}
+            <Col xl="6">
+              <Card className="shadow">
+                <CardHeader className="border-0 d-flex justify-content-between align-items-center">
+                  <h3 className="mb-0">Penghasilan</h3>
+                  <Button
+                    color="primary"
+                    size="sm"
+                    className="d-flex align-items-center"
+                    onClick={addPenghasilan}
+                  >
+                    <i className="ni ni-fat-add me-1"></i>
+                    Add
+                  </Button>
+                </CardHeader>
+                <Table className="align-items-center table-flush" responsive>
+                  <thead className="thead-light">
+                    <tr>
+                      <th scope="col">Name</th>
+                      <th scope="col">Total</th>
+                      <th scope="col">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="6" className="text-center">
+                          <span className="spinner-border spinner-border-sm"></span>
+                        </td>
+                      </tr>
+                    ) : dataPenghasilan.length > 0 ? (
+                      dataPenghasilan.map((item, index) => (
+                        <tr key={index}>
+                          <td>
+                            <Input
+                              className="form-control-alternative"
+                              type="text"
+                              name="name"
+                              value={item.name.toUpperCase()}
+                              placeholder="Tambah penghasilan"
+                              onChange={(e) =>
+                                handleChangePenghasilan(index, e)
+                              }
+                            />
+                          </td>
+                          <td>
+                            <Input
+                              className="form-control-alternative"
+                              type="text"
+                              name="total"
+                              value={`Rp ${formatRupiah(item.total)}`}
+                              placeholder="0"
+                              onChange={(e) =>
+                                handleChangePenghasilan(index, e)
+                              }
+                            />
+                          </td>
+                          <td>
+                            <Button
+                              color="danger"
+                              className="d-flex align-items-center"
+                              onClick={() => handleDeletePenghasilan(index)}
+                            >
+                              <i className="ni ni-fat-remove"></i>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" className="text-center">
+                          No Data Found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </Card>
+            </Col>
+
+            {/* Kartu Kanan */}
+            <Col xl="6">
+              <Card className="shadow">
+                <CardHeader className="border-0 d-flex justify-content-between align-items-center">
+                  <h3 className="mb-0">Potongan</h3>
+                  <Button
+                    color="primary"
+                    size="sm"
+                    className="d-flex align-items-center"
+                    onClick={addPotongan}
+                  >
+                    <i className="ni ni-fat-add me-1"></i>
+                    Add
+                  </Button>
+                </CardHeader>
+                <Table className="align-items-center table-flush" responsive>
+                  <thead className="thead-light">
+                    <tr>
+                      <th scope="col">Name</th>
+                      <th scope="col">Total</th>
+                      <th scope="col">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="6" className="text-center">
+                          <span className="spinner-border spinner-border-sm"></span>
+                        </td>
+                      </tr>
+                    ) : dataPotongan.length > 0 ? (
+                      dataPotongan.map((item, index) => (
+                        <tr key={index}>
+                          <td>
+                            <Input
+                              className="form-control-alternative"
+                              type="text"
+                              name="name"
+                              value={item.name.toUpperCase()}
+                              placeholder="Tambah potongan"
+                              onChange={(e) => handleChangePotongan(index, e)}
+                            />
+                          </td>
+                          <td>
+                            <Input
+                              className="form-control-alternative"
+                              type="text"
+                              name="total"
+                              value={`Rp ${formatRupiah(item.total)}`}
+                              placeholder="0"
+                              onChange={(e) => handleChangePotongan(index, e)}
+                            />
+                          </td>
+                          <td>
+                            <Button
+                              color="danger"
+                              className="d-flex align-items-center"
+                              onClick={() => handleDeletePotongan(index)}
+                            >
+                              <i className="ni ni-fat-remove"></i>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" className="text-center">
+                          No Data Found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </Card>
+            </Col>
+          </Row>
+        ) : (
+          ""
+        )}
 
         <CustomModal
           visible={modal.visible}
