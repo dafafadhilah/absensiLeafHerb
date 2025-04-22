@@ -253,7 +253,7 @@ const RekapGaji = (props) => {
       margin: { left: 10 },
       tableWidth: pageWidth - 20, // full width dengan margin 10 kanan-kiri
       body: [
-        ["COMPANY", ": LeafHerb"],
+        ["COMPANY", ": PT Herbal Jaya Sentosa (LeafHerb)"],
         ["NAME", ": " + employee.name],
       ],
       theme: "plain",
